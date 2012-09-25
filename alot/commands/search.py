@@ -105,7 +105,7 @@ class RetagPromptCommand(Command):
 
 
 @registerCommand(MODE, 'tag', forced={'action': 'add'}, arguments=[
-    (['--all'], {'action': 'store_true', 'dest': 'all', 'default': 'True',
+    (['--all'], {'action': 'store_true', 'dest': 'all', 'default': 'False',
                  'help':'tag all messages in selection'}),
     (['--match'], {'action': 'store_false', 'dest': 'all',
                    'help':'tag matching messages in selection'}),
@@ -118,7 +118,7 @@ class RetagPromptCommand(Command):
     help='add tags to all messages in the thread',
 )
 @registerCommand(MODE, 'retag', forced={'action': 'set'}, arguments=[
-    (['--all'], {'action': 'store_true', 'dest': 'all', 'default': 'True',
+    (['--all'], {'action': 'store_true', 'dest': 'all', 'default': 'False',
                  'help':'retag all messages in selection'}),
     (['--match'], {'action': 'store_false', 'dest': 'all',
                    'help':'retag matching messages in selection'}),
@@ -131,7 +131,7 @@ class RetagPromptCommand(Command):
     help='set tags of all messages in the thread',
 )
 @registerCommand(MODE, 'untag', forced={'action': 'remove'}, arguments=[
-    (['--all'], {'action': 'store_true', 'dest': 'all', 'default': 'True',
+    (['--all'], {'action': 'store_true', 'dest': 'all', 'default': 'False',
                  'help':'untag all messages in selection'}),
     (['--match'], {'action': 'store_false', 'dest': 'all',
                    'help':'untag matching messages in selection'}),
@@ -144,6 +144,8 @@ class RetagPromptCommand(Command):
     help='remove tags from all messages in the thread',
 )
 @registerCommand(MODE, 'toggletags', forced={'action': 'toggle'}, arguments=[
+    (['--all'], {'action': 'store_true', 'dest': 'all', 'default': 'False',
+                 'help':'retag all messages in selection'}),
     (['--no-flush'], {'action': 'store_false', 'dest': 'flush',
                       'default': 'True',
                       'help': 'postpone a writeout to the index'}),
@@ -157,7 +159,7 @@ class RetagPromptCommand(Command):
     """)
 class TagCommand(Command):
     """manipulate message tags"""
-    def __init__(self, tags=u'', action='add', all=True, flush=True,
+    def __init__(self, tags=u'', action='add', all=False, flush=True,
                  target='thread', **kwargs):
         """
         :param tags: comma separated list of tagstrings to set
@@ -225,7 +227,8 @@ class TagCommand(Command):
 
         tags = filter(lambda x: x, self.tagsstring.split(','))
 
-        if self.all:
+        if self.all == True:
+            logging.debug('ALL!!')
             pipe, proc = ui.dbman.get_threads(testquery)
             threadlist = PipeWalker(pipe, ThreadlineWidget, dbman=ui.dbman)
             try:
@@ -255,6 +258,7 @@ class TagCommand(Command):
                 return
 
         else:  # not self.all
+            logging.debug('NOT ALL')
             try:
                 if self.action == 'add':
                     ui.dbman.tag(testquery, tags,
@@ -273,4 +277,4 @@ class TagCommand(Command):
 
         # flush index
         if self.flush:
-            ui.apply_command(commands.globals.FlushCommand())
+            ui.apply_command(commands.globals.FlushCommand(callback=refresh))
